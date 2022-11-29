@@ -1,19 +1,14 @@
 package com.example.scanwifi;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -21,16 +16,26 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-//import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 
 public class MainActivity extends AppCompatActivity {
+
+    private String url = "http://" + "10.0.2.2" + ":" + 5000 + "/";
+    private String postBodyString;
+    private MediaType mediaType;
+    private RequestBody requestBody;
+    private Button connect;
 
     private WifiManager wifiManager;
     private ListView listView;
@@ -40,9 +45,10 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> arrayList = new ArrayList<>();
     private ArrayAdapter adapter;
 
+    private String POST="POST";
+    private String GET="GET";
+
     EditText txtRoom;
-    Button btnSave;
-    String roomtxt;
     private static final int WRITE_EXTERNAL_STORAGE_CODE = 1;
 
     @Override
@@ -50,30 +56,27 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         buttonScan = findViewById(R.id.scanBtn);
+        connect = findViewById(R.id.connect);
         buttonScan.setOnClickListener(view -> scanWifi());
-
-        btnSave = findViewById(R.id.btnSave);
         txtRoom = findViewById(R.id.txtRoom);
 
-        btnSave.setOnClickListener(view -> {
+        connect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                postRequest("your message here", url);
 
-            roomtxt = txtRoom.getText().toString().trim();
-            if (roomtxt.isEmpty()){
-                Toast.makeText(MainActivity.this, "Please enter room name...", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                    if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-                        String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                        requestPermissions(permissions, WRITE_EXTERNAL_STORAGE_CODE);
-                    }
-                    else {
-                        saveToTxtFile(roomtxt);
-                    }
+                int x = info.getIndex();
+
+                System.out.println(x);
+
+                ArrayList<String> tempName = new ArrayList<>();
+                tempName = info.getName();
+                for (int l = 0; l <= x; l++) {
+                    System.out.println(tempName.get(l));
                 }
-                else {
-                    saveToTxtFile(roomtxt);
-                }
+
+                postRequest(String.valueOf(tempName), url);
+
             }
         });
 
@@ -88,45 +91,51 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
         listView.setAdapter(adapter);
         scanWifi();
+
     }
 
-    @Override
-    public void onRequestPermissionsResult (int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == WRITE_EXTERNAL_STORAGE_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                saveToTxtFile(roomtxt);
-            }
-            else {
-                Toast.makeText(this, "Storage permission is required to store data", Toast.LENGTH_SHORT).show();
-            }
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    private RequestBody buildRequestBody(String msg) {
+        postBodyString = msg;
+        mediaType = MediaType.parse("text/plain");
+        requestBody = RequestBody.create(postBodyString, mediaType);
+        return requestBody;
     }
 
-    private void saveToTxtFile(String roomtxt) {
+    private void postRequest(String message, String URL) {
+        RequestBody requestBody = buildRequestBody(message);
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request = new Request.Builder().post(requestBody).url(URL).build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(final Call call, final IOException e) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
 
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis());
 
-        try {
+                        Toast.makeText(MainActivity.this, "Something went wrong:" + " " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        call.cancel();
 
-            File path = Environment.getExternalStorageDirectory();
-            File dir = new File(path + "/My Files/");
-            dir.mkdirs();
-            String fileName = "RoomFile_" + timeStamp + ".txt";
 
-            File file = new File(dir, fileName);
+                    }
+                });
 
-            FileWriter fw = new FileWriter(file.getAbsoluteFile());
-            BufferedWriter bw = new BufferedWriter(fw);
-            bw.write(roomtxt);
-            bw.close();
+            }
 
-            Toast.makeText(this, " is saved to \n" + dir, Toast.LENGTH_SHORT).show();
-        }
-        catch (Exception e) {
-
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Toast.makeText(MainActivity.this, response.body().string(), Toast.LENGTH_LONG).show();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        });
     }
 
     private void scanWifi() {
@@ -143,10 +152,23 @@ public class MainActivity extends AppCompatActivity {
             unregisterReceiver(this);
 
             List<ScanResult> results = wifiManager.getScanResults();
+            ArrayList<String> WifiName = new ArrayList<String>();
+            ArrayList<Double> WifiStr = new ArrayList<Double>();
+            int i = 0;
+
             for (ScanResult scanResult : results) {
                 arrayList.add(scanResult.SSID + " - " + scanResult.level);
+
+                WifiName.add(scanResult.SSID);
+                WifiStr.add(Double.valueOf(scanResult.level));
                 adapter.notifyDataSetChanged();
+                i++;
             }
+            new info(WifiName, WifiStr, (i-1));
+
         }
+
     };
+
 }
+
