@@ -1,5 +1,6 @@
 package com.example.scanwifi;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.BroadcastReceiver;
@@ -22,6 +23,7 @@ import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -31,10 +33,6 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String url = "http://" + "10.0.2.2" + ":" + 5000 + "/";
-    private String postBodyString;
-    private MediaType mediaType;
-    private RequestBody requestBody;
     private Button connect;
 
     private WifiManager wifiManager;
@@ -45,8 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> arrayList = new ArrayList<>();
     private ArrayAdapter adapter;
 
-    private String POST="POST";
-    private String GET="GET";
+    private OkHttpClient okHttpClient;
 
     EditText txtRoom;
     private static final int WRITE_EXTERNAL_STORAGE_CODE = 1;
@@ -57,13 +54,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         buttonScan = findViewById(R.id.scanBtn);
         connect = findViewById(R.id.connect);
-        buttonScan.setOnClickListener(view -> scanWifi());
         txtRoom = findViewById(R.id.txtRoom);
+
+        buttonScan.setOnClickListener(view -> scanWifi());
+
+        okHttpClient = new OkHttpClient();
 
         connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                postRequest("your message here", url);
+
+                String roomtxt = txtRoom.getText().toString();
 
                 int x = info.getIndex();
 
@@ -75,7 +76,35 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println(tempName.get(l));
                 }
 
-                postRequest(String.valueOf(tempName), url);
+                RequestBody formbody = new FormBody.Builder().add("Wifi", roomtxt).build();
+
+                Request request = new Request.Builder().url("http://192.168.1.9:5000/debug").post(formbody).build();
+                okHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "server down", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+
+                        if(response.body().toString().equals(roomtxt)){
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    response.close();
+                                    Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+                });
 
             }
         });
@@ -92,50 +121,6 @@ public class MainActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
         scanWifi();
 
-    }
-
-    private RequestBody buildRequestBody(String msg) {
-        postBodyString = msg;
-        mediaType = MediaType.parse("text/plain");
-        requestBody = RequestBody.create(postBodyString, mediaType);
-        return requestBody;
-    }
-
-    private void postRequest(String message, String URL) {
-        RequestBody requestBody = buildRequestBody(message);
-        OkHttpClient okHttpClient = new OkHttpClient();
-        Request request = new Request.Builder().post(requestBody).url(URL).build();
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(final Call call, final IOException e) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-
-
-                        Toast.makeText(MainActivity.this, "Something went wrong:" + " " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        call.cancel();
-
-
-                    }
-                });
-
-            }
-
-            @Override
-            public void onResponse(Call call, final Response response) throws IOException {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Toast.makeText(MainActivity.this, response.body().string(), Toast.LENGTH_LONG).show();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            }
-        });
     }
 
     private void scanWifi() {
@@ -167,8 +152,6 @@ public class MainActivity extends AppCompatActivity {
             new info(WifiName, WifiStr, (i-1));
 
         }
-
     };
-
 }
 
