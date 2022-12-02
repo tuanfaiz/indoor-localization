@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class info {
     private static ArrayList<String> name;
-    ArrayList<Double>strength = new ArrayList<>();
+    private static ArrayList<Double> strength;
     private static int index;
 
 
@@ -24,7 +24,7 @@ public class info {
         strength.set(in, s);
     }
 
-    public ArrayList<Double> getStr() {
+    public static ArrayList<Double> getStr() {
         return strength;
     }
 

@@ -20,6 +20,8 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -29,6 +31,11 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
+import com.google.gson.*;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -57,26 +64,36 @@ public class MainActivity extends AppCompatActivity {
         txtRoom = findViewById(R.id.txtRoom);
 
         buttonScan.setOnClickListener(view -> scanWifi());
-
         okHttpClient = new OkHttpClient();
+        JsonObject jsonObj = new JsonObject();
 
         connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 String roomtxt = txtRoom.getText().toString();
-
                 int x = info.getIndex();
 
-                System.out.println(x);
-
                 ArrayList<String> tempName = new ArrayList<>();
+                ArrayList<Double> tempStrength = new ArrayList<>();
                 tempName = info.getName();
-                for (int l = 0; l <= x; l++) {
-                    System.out.println(tempName.get(l));
-                }
+                tempStrength = info.getStr();
 
-                RequestBody formbody = new FormBody.Builder().add("Wifi", roomtxt).build();
+                JsonArray jsonWifi = new Gson().toJsonTree(tempName).getAsJsonArray();
+                JsonArray jsonStrength = new Gson().toJsonTree(tempStrength).getAsJsonArray();
+                jsonObj.add("Wifi Name", jsonWifi);
+                jsonObj.add("Strength", jsonStrength);
+
+                RequestBody formbody = new FormBody.Builder().add("Output", String.valueOf(jsonObj)).build();
+
+                try (FileWriter out = new FileWriter("C:/Users/tuanf/AndroidStudioProjects/json/wifi.json")) {
+                    out.write(jsonObj.toString());
+                    out.flush();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(jsonObj);
 
                 Request request = new Request.Builder().url("http://192.168.1.9:5000/debug").post(formbody).build();
                 okHttpClient.newCall(request).enqueue(new Callback() {
