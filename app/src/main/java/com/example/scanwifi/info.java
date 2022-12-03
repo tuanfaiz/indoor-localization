@@ -1,38 +1,17 @@
 package com.example.scanwifi;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class info {
-    private static ArrayList<String> name;
-    private static ArrayList<Double> strength;
-    private static int index;
+    private HashMap<String, ArrayList> wifiData ;
 
-
-    public info(ArrayList<String> wifiName, ArrayList<Double> wifiStr, int i) {
-
-        name = wifiName;
-        strength = wifiStr;
-        index = i;
-
+    public HashMap<String, ArrayList> getWifiData() {
+        return wifiData;
+    }
+    public void setWifiData(HashMap<String, ArrayList> wifiData) {
+        this.wifiData = wifiData;
     }
 
-    public void setName(String n, int in){
-        name.set(in, n);
-    }
 
-    public void setStr(double s, int in){
-        strength.set(in, s);
-    }
-
-    public static ArrayList<Double> getStr() {
-        return strength;
-    }
-
-    public static ArrayList<String> getName() {
-        return name;
-    }
-
-    public static int getIndex() {
-        return index;
-    }
 }
