@@ -6,7 +6,11 @@ import java.util.HashMap;
 public class info {
     private HashMap<String, ArrayList> wifiData;
     private static ArrayList<String> name;
+    private static ArrayList<String> ssid;
+    private static ArrayList<String> bssid;
     private static ArrayList<Double> strength;
+    private static ArrayList<Double> coord;
+    private static ArrayList<String> notes;
     private static int index;
 
     public HashMap<String, ArrayList> getWifiData() {
