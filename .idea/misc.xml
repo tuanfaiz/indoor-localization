@@ -3,8 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/tuanf/AndroidStudioProjects/indoor-localization/app/src/main/res/layout/activity_main.xml" value="0.24814814814814815" />
+        <entry key="..\:/Users/tuanf/AndroidStudioProjects/indoor-localization/app/src/main/res/layout/activity_main.xml" value="0.25" />
+        <entry key="..\:/Users/tuanf/AndroidStudioProjects/indoor-localization/app/src/main/res/layout/activity_testing.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/tuanf/AndroidStudioProjects/indoor-localization/app/src/main/res/layout/main_page.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/tuanf/AndroidStudioProjects/indoor-localization/app/src/main/res/layout/row.xml" value="0.24814814814814815" />
+        <entry key="..\:/Users/tuanf/AndroidStudioProjects/indoor-localization/app/src/main/res/layout/testinginterface.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/tuanf/AndroidStudioProjects/scanwifi/app/src/main/res/layout/activity_main.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/tuanf/AndroidStudioProjects/scanwifi/app/src/main/res/layout/main_page.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/tuanf/AndroidStudioProjects/scanwifi/app/src/main/res/layout/row.xml" value="0.11302083333333333" />

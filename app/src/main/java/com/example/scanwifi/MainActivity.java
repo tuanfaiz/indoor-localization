@@ -29,18 +29,20 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
-    private OkHttpClient okHttpClient;
-    private List<ScanResult> results;
-    info wifiInfo = new info();
-    private Button connect;
-
     private WifiManager wifiManager;
     private ListView listView;
     private Button buttonScan;
+    private int size = 0;
+    private List<ScanResult> results;
     private ArrayList<String> arrayList = new ArrayList<>();
     private ArrayAdapter adapter;
+    private Button connect;
+    private OkHttpClient okHttpClient;
 
+    info wifiInfo = new info();
     EditText txtRoom;
+    EditText coordinates;
+    EditText notes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,12 +53,24 @@ public class MainActivity extends AppCompatActivity {
         buttonScan = findViewById(R.id.scanBtn);
         connect = findViewById(R.id.connect);
         txtRoom = findViewById(R.id.txtRoom);
+        coordinates = findViewById(R.id.txtCoordinates);
 
         okHttpClient = new OkHttpClient();
         JsonObject jsonObj = new JsonObject();
 
         //Set listener to each related button
-        buttonScan.setOnClickListener(view -> scanWifi());
+        buttonScan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                scanWifi();
+            }
+        });
+
+        listView = findViewById(R.id.wifiList);
+        wifiManager = (WifiManager)
+                getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+
         connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -69,9 +83,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        listView = findViewById(R.id.wifiList);
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-
         // Check if wifi available
         if(!wifiManager.isWifiEnabled()) {
             Toast.makeText(this, "Wi-Fi is disabled ... You need to enabled it", Toast.LENGTH_SHORT).show();
@@ -80,8 +91,6 @@ public class MainActivity extends AppCompatActivity {
 
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
         listView.setAdapter(adapter);
-        scanWifi();
-
     }
 
     private void scanWifi() {
@@ -101,13 +110,6 @@ public class MainActivity extends AppCompatActivity {
         String response = httpMethods.post("http://192.168.1.9:5000/post", json);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        System.out.println("Stopping receiver");
-        unregisterReceiver(wifiReceiver);
-    }
-
     BroadcastReceiver wifiReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -115,24 +117,27 @@ public class MainActivity extends AppCompatActivity {
             if (success) {
                 scanSuccess();
             }
-
         }
     };
 
     private void scanSuccess() {
 
         List<ScanResult> results = wifiManager.getScanResults();
-
         HashMap<String, ArrayList> wifiData = new HashMap<String, ArrayList>();
+        ArrayList<String> ssid = new ArrayList<>();
+        ArrayList<String> bssid = new ArrayList<>();
+        ArrayList<Integer> level = new ArrayList<>();
+        ArrayList<String> name = new ArrayList<>();
+        ArrayList<String> cords = new ArrayList<>();
+        ArrayList<String> note = new ArrayList<>();
 
-        ArrayList<String> ssid = new ArrayList<String>();
-        ArrayList<String> bssid = new ArrayList<String>();
-        ArrayList<Integer> level = new ArrayList<Integer>();
-        ArrayList<String> name = new ArrayList<String>();
 
         txtRoom = (EditText) findViewById(R.id.txtRoom);
-
+        coordinates = (EditText) findViewById(R.id.txtCoordinates);
+        notes = (EditText) findViewById(R.id.txtNotes);
         String room_name = txtRoom.getText().toString();
+        String croom = coordinates.getText().toString();
+        String nota = notes.getText().toString();
 
         for (ScanResult scanResult : results) {
             arrayList.add(scanResult.SSID + " - " + scanResult.level);
@@ -144,14 +149,17 @@ public class MainActivity extends AppCompatActivity {
             ssid.add(results.get(i).SSID);
             bssid.add(results.get(i).BSSID);
             level.add(results.get(i).level);
+            cords.add(croom);
+            note.add(nota);
         }
 
         wifiData.put("NAME", name);
         wifiData.put("SSID", ssid);
         wifiData.put("BSSID", bssid);
         wifiData.put("LEVEL", level);
+        wifiData.put("COORDINATES", cords);
+        wifiData.put("NOTES", note);
         wifiInfo.setWifiData(wifiData);
-        System.out.println("Cer check");
         System.out.println(wifiData);
 
     }
